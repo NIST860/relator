@@ -1,0 +1,31 @@
+enforce year=int
+RESULTS EMISSION DATA IS FOR PERIOD 10 FOR ALMOST ALL DATA
+we rely upon the fact that BlanketWall and RigidWall have identical Rates
+
+
+Refactors:
+	stop hard-coding the id of emissiontype Carbon in results/carbon
+	emissions.emissions/impacts/normalized -> OrderedDict
+	rename carbon to emissions
+	rename Equivalence (emission -> type, equivalence -> value)
+	maintenace_cost, repair_cost, replace_cost, ?_cost_for
+	energy use -> energy use per year
+
+Security holes:
+	input fields are sometimes used in the form Quantity(#, input)
+		(If such fields are exposed to non-admin, that's bad.)
+
+Notes:
+	We assume that R-value increases with insulation price
+	We assume that cooling is the first capacity given in eplus files
+	We assume that frame > film > coating when ordering windows by 'cost'
+
+When you're bored:
+	ensure import consistency
+	move __unicode__ up to under __meta__
+	Convert all names to lowercase (they're .title()'d in __unicode__)
+	Think of a better way to use output scripts
+
+For the future:
+	rework filtering in views (use POST?)
+	results -> database

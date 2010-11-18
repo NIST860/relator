@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block links %}
+{{ block.super }}
+<style type="text/css">
+	.airr { text-align: center; width: 60px; }
+	#data table.display tr.gradeA.even:hover td,
+	#data table.display tr.gradeA.even:hover th { background-color: #909EC9; }
+	#data table.display tr.gradeA.odd:hover td,
+	#data table.display tr.gradeA.odd:hover th { background-color: #909EC9; }
+</style>
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('.gradeU').hide();
+		$('.gradeA').toggle(function() {
+			$(this).nextAll('.gradeU:lt(3)').show();
+		}, function() {
+			$(this).nextAll('.gradeU:lt(3)').hide();
+		});
+		$('#data .head').prependTo($('.fg-toolbar:first', container));
+	});
+</script>
+{% endblock %}
+
+{% block body %}
+{% with comparison.baseline as base %}
+{% load comparison %}
+{% load utils %}
+<div id="data">
+	<div class="dataTables_wrapper">
+		<div class="fg-toolbar ui-widget-header ui-corner-tl ui-corner-tr ui-helper-clearfix">
+			<span style="float: left">{{ comparison.building }} - {{ comparison.year }} years</span>
+			<span style="float: right">{{ comparison.location }}</span>
+		</div>
+		<table class="display main">
+			<thead>
+				<tr>
+					<th class="ui-state-default">Standard</th>
+					<th class="ui-state-default">Lifecycle Costs</th>
+					<th class="ui-state-default">Energy Costs</th>
+					<th class="ui-state-default">Energy Use</th>
+					<th class="ui-state-default">AIRR</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!-- {% cycle 'even' 'odd' as stripe %} -->
+				<tr class="gradeX odd">
+					<td>{{ base.standard }}</td>
+					<td>{{ base.lifecycle.cost|price }}</td>
+					<td>{{ base.energy.cost|price }}</td>
+					<td>{{ base.energy.use|item|floatformat:2 }} kWh / year</td>
+					<td class="airr">-</td>
+				</tr>
+
+				{% for results in comparison.rest %}
+				{% with results.lifecycle.cost|delta:base.lifecycle.cost as dlc %}
+				{% with results.energy.cost|delta:base.energy.cost as dec %}
+				{% with results.energy.use|delta:base.energy.use as deu %}
+				{% with results.building.square_feet|item as sf %}
+				<tr class="gradeA {% cycle stripe %}">
+					<td>{{ results.standard }}</td>
+					<td>{{ results.lifecycle.cost|price }}</td>
+					<td>{{ results.energy.cost|price }}</td>
+					<td>{{ results.energy.use|item:"kWh"|floatformat:2 }} kWh / year</td>
+					<td class="airr">{{ results|airr:base }}</td>
+				</tr>
+				<tr class="gradeU {% cycle stripe %}">
+					<td>&Delta;</td>
+					<td>{{ dlc|price }}</td>
+					<td>{{ dec|price }}</td>
+					<td>{{ deu|item:"kWh"|floatformat:2 }} kWh / year</td>
+					<td class="airr" rowspan="3">-</td>
+				</tr>
+				<tr class="gradeU {% cycle stripe %}">
+					<td>&Delta; / ft&sup2;</td>
+					<td>{{ dlc|div:sf|price }} / ft&sup2;</td>
+					<td>{{ dec|div:sf|price }} / ft&sup2;</td>
+					<td>{{ deu|div:sf|floatformat:2 }} kWh / ft&sup2; per year</td>
+				</tr>
+				<tr class="gradeU {% cycle stripe %}">
+					<td>% Reduction</td>
+					<td>{{ results.lifecycle.cost|percent:base.lifecycle.cost|floatformat:2 }}%</td>
+					<td>{{ results.energy.cost|percent:base.energy.cost|floatformat:2 }}%</td>
+					<td>{{ results.energy.use|percent:base.energy.use|floatformat:2 }}%</td>
+				</tr>
+				{% endwith %}
+				{% endwith %}
+				{% endwith %}
+				{% endwith %}
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endwith %}
+{% endblock %}

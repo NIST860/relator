@@ -1,0 +1,107 @@
+<style type="text/css">
+	#regions th.left input { float: left; }
+	#regions td, #regions th { white-space: nowrap; }
+	#regions tbody th { text-align: right; }
+	#regions tbody td { text-align: left; }
+	#regions table col.last { width: 50%; }
+
+	#regions table tr td.even.selected { background-color: #909EC9; }
+	#regions table tr td.odd.selected { background-color: #808EB9; }
+	#regions .fg-toolbar button { float: right; }
+
+	#regions tr.gradeA td.odd { background-color: #ddffdd; }
+	#regions tr.gradeA td.even { background-color: #eeffee; }
+	#regions tr.gradeC td.odd { background-color: #ddddff; }
+	#regions tr.gradeC td.even { background-color: #eeeeff; }
+	#regions tr.gradeX td.odd { background-color: #ffdddd; }
+	#regions tr.gradeX td.even { background-color: #ffeeee; }
+	#regions tr.gradeU td.odd { background-color: #ddd; }
+	#regions tr.gradeU td.even { background-color: #eee; }
+</style>
+
+<script type="text/javascript">
+(function() {
+	function enable() {
+		$('#regions .continuer').button('option', 'disabled', false);
+		$('#allregions').attr('checked', true);
+	};
+	function disable() {
+		$('#regions .continuer').button('option', 'disabled', true);
+		$('#allregions').removeAttr('checked');
+	};
+
+	function rows(td) { return $(td).parents('tbody'); };
+	function region(td) { return rows(td).find('.region'); };
+	function zones(td) { return rows(td).find('.zone'); };
+	function waslast(td) { return zones(td).find(':checked').length == 0; };
+	function noneleft() { return $('#regions tbody :checked').length == 0; };
+
+	function select(td) { $(td).addClass('selected').find(':checkbox').attr('checked', true); };
+	function deselect(td) { $(td).removeClass('selected').find(':checkbox').removeAttr('checked'); };
+
+	function select_zone(td) { select(td); select(region(td)); enable(); }
+	function deselect_zone(td) { deselect(td); if(waslast(td)) deselect_region(region(td)); };
+	function toggle_zone() { ($(this).is('.selected')? deselect_zone : select_zone)(this); };
+
+	function select_region(td) { select(td); select(zones(td)); enable(); };
+	function deselect_region(td) { deselect(td); deselect(zones(td)); if(noneleft()) disable(); };
+	function toggle_region() { ($(this).is('.selected')? deselect_region : select_region)(this); };
+	function toggle_regions() { ($(this).is(':checked')? select_region : deselect_region)($('#regions .region')); };
+
+	$(document).ready(function() {
+		$('#regions .zone').click(toggle_zone);
+		$('#regions .region').click(toggle_region);
+		$('#regions .continuer').button();
+		$('#allregions').click(toggle_regions);
+		$('#regions .zone :checked').each(function() {
+			select_zone($(this).parents('td'));
+		});
+	});
+})();
+</script>
+
+{% load utils %}
+<form id="regions" method="post" action="/narrow/by-region/">
+	{% csrf_token %}
+	<div class="fg-toolbar ui-widget-header ui-corner-top">&nbsp;</div>
+	<table class="display main">
+		<thead>
+			<tr>
+				<th class="ui-state-default left">
+					<input type="checkbox" id="allregions">
+					<span>Census Region</span>
+				</th>
+				<th class="ui-state-default">
+					Census Zone
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<!--{% cycle 'even' 'odd' as outer %}{% cycle 'even' 'odd' as inner %}-->
+			{% for region in regions %}
+			<tbody>
+				{% for zone in region.zones.all %}
+				<tr class="region-{{ region.pk }} {{ region.pk|grade }}">
+					{% if forloop.first %}
+					<td rowspan="{{ region.zones.all|length }}" class="region {% cycle outer %}">
+						<input name="region" type="checkbox">
+						{{ region }}
+					</td>
+					{% endif %}
+					<td class="zone {% cycle inner %}">
+						<input name="zone" value="{{ zone.pk }}" type="checkbox">
+						{{ zone }}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+			{% endfor %}
+		</tbody>
+	</table>
+	<div class="fg-toolbar ui-widget-header ui-corner-bottom ui-helper-clearfix">
+		<div class="dataTables_info"></div>
+		<button type="submit" class="ui-iconed continuer" disabled>
+			Continue<span class="ui-icon ui-icon-arrowthick-1-e"</span>
+		</button>
+	</div>
+</form>

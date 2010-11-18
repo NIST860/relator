@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load utils %}
+
+{% block links %}
+{{ block.super }}
+<style type="text/css">
+	#data a { float: right; }
+	#data table.display tr.even:hover td { background-color: #909EC9; }
+	#data table.display tr.odd:hover td { background-color: #808EB9; }
+</style>
+<script type="text/javascript">
+	$(document).ready(function() {
+		tablify($('#data'), {
+			aaSorting: [[1, 'asc'], [2, 'asc']],
+			aoColumns: [null, null, {sType: 'numeric'}],
+			bStateSave: false,
+		});
+		$('#data tbody tr').unbind('click').click(function(e) {
+			$('.detail', this).submit();
+		});
+	});
+</script>
+{% endblock %}
+
+{% block body %}
+<div id="data">
+	<div class="extra options"></div>
+	<table class="display main">
+		<thead>
+			<tr>
+				<th>Building</th>
+				<th>Location</th>
+				<th>Year</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for comparison in data %}
+			<tr class="gradeA">
+				<td>
+					{{ comparison.building }}
+					<form class="detail" action="{% url results.views.comparison %}" target="_blank">
+						<input type="hidden" name="building" value="{{ comparison.building.pk }}">
+						<input type="hidden" name="location" value="{{ comparison.location.pk }}">
+						<input type="hidden" name="year" value="{{ comparison.year|item }}">
+						<input type="hidden" name="deflator" value="{{ comparison.deflator }}">
+						{% if comparison.marr %}
+						<input type="hidden" name="marr" value="{{ comparison.marr }}">
+						{% endif %}
+						{% for standard in comparison.standards %}
+						<input type="hidden" name="standard" value="{{ standard.pk }}">
+						{% endfor %}
+						<input type="hidden" name="carbon" value="{{ comparison.carbon }}">
+					</form>
+				</td>
+				<td>{{ comparison.location }}</td>
+				<td>{{ comparison.year|floatformat }}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<div class="extra continue">
+		<button type="submit" class="ui-iconed continuer" disabled>
+			Compare<span class="ui-icon ui-icon-arrowthick-1-e"></span>
+		</button>
+	</div>
+</div>
+{% endblock %}

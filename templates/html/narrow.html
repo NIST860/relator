@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block links %}
+{{ block.super }}
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('#options').tabs({cache: true, cookie: {expires: 1}});
+	});
+</script>
+{% endblock %}
+
+
+{% block body %}
+<div id="options">
+	<ul>
+		<li><a href="by-state">By State</a></li>
+		<li><a href="by-region">By Region</a></li>
+		<li><a href="by-standard">By Standard</a></li>
+	</ul>
+</div>
+{% endblock %}

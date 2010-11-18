@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block links %}
+{{ block.super }}
+<style type="text/css">
+	#status { float: left; margin: 1em; }
+	#status.closed .open { display: none; }
+	#status.open .closed { display: none; }
+	#status .ui-icon { float: left; margin-right: .3em; padding-left: 0; }
+	#status table { background: white; padding: .2em 1em; margin: .5em 0; }
+
+	#settings .options { text-align: center; float: none; }
+	#settings .fg-toolbar h3 { margin-top: 0; }
+	#settings .table { margin: 1em; margin-bottom: 2em; width: 45%; }
+	#settings .dataTables_filter { width: 100%; display: none; }
+	#standards, #period { float: left; clear: both; }
+	#buildings, #variables { float: right; }
+	#variables .body { padding: 1em; text-align: center; }
+	#variables label.error { display: block; }
+
+	.calculate { text-align: center; padding: 2em; clear: both; }
+	#calculate { padding: .5em, 1em; font-weight: bold; }
+	#years { text-align: center; }
+	#years .ui-state-active { background-color: #ddffdd; background-image: none; }
+	#years label { width: 19%; }
+
+	#carbon label { width: 100%; margin-top: .5em; }
+	#carbon-slider { margin-top: .5em; }
+</style>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+
+		tablify($('#standards'), {
+			sScrollY: '200px',
+			aaSorting: [[1, 'asc']],
+			aoColumnDefs: [
+				{bSortable: false, sWidth: '20px', aTargets: [0]},
+				{bVisible: false, aTargets: [1]},
+			]
+		});
+
+		tablify($('#buildings'), {
+			sScrollY: '200px',
+			aaSorting: [[1, 'asc']],
+			aoColumnDefs: [
+				{bSortable: false, sWidth: '20px', aTargets: [0]},
+			]
+		});
+
+		$('#calculate').button();
+		$('#years .row').buttonset();
+
+		$('#settings').validate({
+			rules: {
+				deflator: 'required number',
+				marr: 'number',
+			},
+			errorPlacement: function(error, element) {
+				$(element).parents('label').after(error);
+			}
+		});
+
+		$('#carbon label').button();
+		$('#carbon-slider').slider({
+			min: 1.00,
+			value: 1,
+			max: 100.00,
+			step: 0.01,
+			slide: function(e, ui) {
+				$('#carbon-slider-val').val('$' + ui.value);
+			}
+		});
+		$('#carbon-slider-val').change(function() {
+				var val = $(this).val().replace('$', '');
+				$('#carbon-slider').slider('option', 'value', val);
+		});
+	});
+</script>
+{% endblock %}
+
+
+{% block body %}
+{% load utils %}
+<form action="/results/" id="settings">
+
+	{% for city in cities %}
+	<input type="hidden" name="location" value="{{ city.pk }}">
+	{% endfor %}
+
+	<div class="table" id="standards">
+		<div class="extra options">
+			<h3>Standards to Compare</h3>
+		</div>
+		<table class="display main">
+			<thead>
+				<tr>
+					<th class="selectall"><input type="checkbox"></th>
+					<th>Year</th>
+					<th>Standard</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for standard in standards %}
+				<tr class="gradeA">
+					<td class="select highlight">
+						<input type="checkbox" name="standard" value="{{ standard.pk }}">
+					</td>
+					<td>{{ standard.year }}</td>
+					<td>{{ standard }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+	<div class="table" id="buildings">
+		<div class="extra options">
+			<h3>Building Types to Compare</h3>
+		</div>
+		<table class="display main">
+			<thead>
+				<tr>
+					<th class="selectall"><input type="checkbox"></th>
+					<th>Building</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for building in buildings %}
+				<tr class="gradeA">
+					<td class="select highlight">
+						<input type="checkbox" name="building" value="{{ building.pk }}">
+					</td>
+					<td>{{ building }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+	<div class="table" id="period">
+		<div class="fg-toolbar ui-widget-header ui-corner-tl ui-corner-tr ui-helper-clearfix">
+			<div class="options">
+				<h3>Study Period</h3>
+			</div>
+		</div>
+		<div id="years">
+			{% for row in years|by:5 %}
+			<div class="row">
+				{% for year in row %}
+				<input id="year-{{ year }}" name="year" value="{{ year }}" type="checkbox">
+				<label for="year-{{ year }}">
+					{{ year }}
+				</label>
+				{% endfor %}
+			</div>
+			{% endfor %}
+		</div>
+	</div>
+
+	<div class="table" id="variables">
+		<div class="fg-toolbar ui-widget-header ui-corner-tl ui-corner-tr ui-helper-clearfix">
+			<div class="options">
+				<h3>Variables</h3>
+			</div>
+		</div>
+		<table class="body">
+			{{ variables }}
+		</table>
+		<div id="carbon">
+			<h3>Carbon Costing</h3>
+			<label for="carbon-none">
+				<input name="carbon" id="carbon-none" value="none" type="radio" checked>
+				No cost
+			</label>
+
+			<label for="carbon-constant">
+				<input name="carbon" id="carbon-constant" value="constant" type="radio">
+				Constant
+				<input type="text" id="carbon-slider-val" name="carbon-constant" value="$1.00">
+				<div id="carbon-slider"></div>
+			</label>
+
+			<label for="carbon-function">
+				<input name="carbon" id="carbon-function" value="function" type="radio">
+				Function
+				<select name="carbon-function">
+					<option value="low">Low</option>
+					<option value="medium">Medium</option>
+					<option value="high">High</option>
+				</select>
+			</label>
+		</div>
+	</div>
+
+
+	<div class="calculate">
+		<button id="calculate" type="submit">
+			Calculate
+		</button>
+	</div>
+
+</form>
+{% endblock %}

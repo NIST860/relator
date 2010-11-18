@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block links %}
+{{ block.super }}
+<script type="text/javascript">
+	$(document).ready(function() {
+		tablify($('#cities'), {
+			aaSorting: [[2, 'asc'], [1, 'asc']],
+			aoColumnDefs: [{bSortable: false, sWidth: '20px', aTargets: [0]}],
+		});
+		$('#one-per-state').click(function() {
+			deselect.apply($('#cities tbody tr:has(.select :checked)'));
+			select.apply($('#cities tbody tr:has(.select [value=yes])'));
+		});
+	});
+</script>
+{% endblock %}
+
+
+{% block body %}
+{% load utils %}
+<form id="cities" method="post">
+	{% csrf_token %}
+	<div class="extra options">
+		<button type="button" id="one-per-state">One per state</button>
+	</div>
+	<table class="display main">
+		<thead>
+			<tr>
+				<th class="selectall"><input type="checkbox"></th>
+				<th>City</th>
+				<th>State</th>
+				<th>State Energy Code</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for city in cities %}
+			<tr class="{{ city.state.census_region.pk|grade }}">
+				<td class="select highlight">
+					<input type="checkbox" name="city" value="{{ city.pk }}">
+					<input type="hidden" name="representative" value="{% if city.representative %}yes{% else %}no{% endif %}">
+				</td>
+				<td>{{ city }}</td>
+				<td>{{ city.state }}</td>
+				<td>{{ city.standard }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<div class="extra continue">
+		<button type="submit" class="ui-iconed continuer" disabled>
+			Continue<span class="ui-icon ui-icon-arrowthick-1-e"</span>
+		</button>
+	</div>
+</form>
+{% endblock %}

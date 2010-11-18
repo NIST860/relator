@@ -1,0 +1,8 @@
+#zones td, #zones th { white-space: nowrap; }
+#zones tbody th { text-align: right; }
+#zones tbody td { text-align: left; }
+#zones table col.last { width: 50%; }
+
+#zones td.odd { background-color: #ddffdd; }
+#zones td.even { background-color: #eeffee; }
+#zones .fg-toolbar button { float: right; }
